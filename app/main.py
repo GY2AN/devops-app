@@ -1,8 +1,10 @@
-from fastapi import FastAPI
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from fastapi.responses import Response
-from app.routes.health import router as health_router
 import time
+
+from fastapi import FastAPI
+from fastapi.responses import Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+
+from app.routes.health import router as health_router
 
 app = FastAPI(title="devops-app")
 app.include_router(health_router)
