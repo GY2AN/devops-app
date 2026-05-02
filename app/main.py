@@ -35,7 +35,7 @@ async def track_metrics(request, call_next):
 
 @app.get("/")
 def root():
-    return {"message": "devops-app is running", "version": "1.0.0"}
+    return {"message": "devops-app is running", "version": "1.0.1"}
 
 @app.get("/metrics")
 def metrics():
