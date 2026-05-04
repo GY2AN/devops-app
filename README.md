@@ -42,23 +42,23 @@ Developer pushes code
 ## Screenshots
 
 ### CI/CD Pipeline — GitHub Actions
-![GitHub Actions CI Pipeline](docs/screenshots/github-actions.png)
+![GitHub Actions CI Pipeline](docs/screenshots/GitHubAction.png)
 *3-job pipeline: test (17s) → build-push (1m 2s) → update-gitops (5s)*
 
 ### GitOps — ArgoCD Application Tree
-![ArgoCD Application Tree](docs/screenshots/argocd.png)
+![ArgoCD Application Tree](docs/screenshots/ArgoCd.png)
 *ArgoCD showing Healthy + Synced, with full resource tree: Deployment, Service, HPA, PrometheusRule, ServiceMonitor*
 
 ### Observability — Grafana Dashboard
-![Grafana Dashboard](docs/screenshots/grafana.png)
+![Grafana Dashboard](docs/screenshots/Grafana.png)
 *Live metrics: requests/sec by pod, p95 latency by endpoint, available replicas*
 
 ### Observability — Prometheus Targets
-![Prometheus Targets](docs/screenshots/prometheus.png)
+![Prometheus Targets](docs/screenshots/Prometheus.png)
 *Both pods scraped via ServiceMonitor — 2/2 UP, scrape duration ~5-6ms*
 
 ### Application Health Check
-![App Health](docs/screenshots/healthy.png)
+![App Health](docs/screenshots/Healthy.png)
 *FastAPI /health endpoint returning {"status":"healthy"} from production namespace*
 
 
