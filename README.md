@@ -6,38 +6,40 @@ A complete DevOps platform demonstrating CI/CD, GitOps, container orchestration,
 and observability — built to production standards.
 
 ## Architecture
+```
 Developer pushes code
-|
-v
-+----------------------------------+
-|        GitHub Actions CI         |
-|  test > lint > build > scan      |
-|  > push ECR > update GitOps      |
-+---------------+------------------+
-|
-v
-+----------------------------------+
-|        devops-gitops repo        |
-|   Helm charts + values.yaml      |
-+---------------+------------------+
-|  ArgoCD polls every 3 min
-v
-+----------------------------------+
-|        Kubernetes (EKS)          |
-|  production namespace            |
-|  +-- Deployment (2-10 replicas)  |
-|  +-- Service (ClusterIP)         |
-|  +-- HPA (CPU/memory based)      |
-|  +-- ServiceMonitor              |
-|  +-- PrometheusRule              |
-+---------------+------------------+
-|  scrapes /metrics
-v
-+----------------------------------+
-|       Observability Stack        |
-|  Prometheus > Grafana dashboards |
-|  AlertManager > alert rules      |
-+----------------------------------+
+        |
+        v
++-----------------------------------+
+|         GitHub Actions CI         |
+|   test > lint > build > scan      |
+|   > push ECR > update GitOps      |
++----------------+------------------+
+                 |
+                 v
++-----------------------------------+
+|         devops-gitops repo        |
+|    Helm charts + values.yaml      |
++----------------+------------------+
+                 | ArgoCD polls every 3 min
+                 v
++-----------------------------------+
+|         Kubernetes (EKS)          |
+|   production namespace            |
+|   +-- Deployment (2-10 replicas)  |
+|   +-- Service (ClusterIP)         |
+|   +-- HPA (CPU + memory)          |
+|   +-- ServiceMonitor              |
+|   +-- PrometheusRule              |
++----------------+------------------+
+                 | scrapes /metrics
+                 v
++-----------------------------------+
+|        Observability Stack        |
+|   Prometheus > Grafana            |
+|   AlertManager > alert rules      |
++-----------------------------------+
+```
 
 
 ## Tech Stack
@@ -82,37 +84,38 @@ git push
 ```
 
 ## Repository Structure
-devops-app/                         (this repo - application code)
+```
+devops-app/                          (this repo - application code)
 |
 +-- .github/
 |   +-- workflows/
-|   |   +-- ci.yml                  (GitHub Actions pipeline)
+|   |   +-- ci.yml                   (GitHub Actions pipeline)
 |   +-- argocd/
-|       +-- application.yaml        (ArgoCD app definition)
+|       +-- application.yaml         (ArgoCD app definition)
 +-- app/
-|   +-- main.py                     (FastAPI app with /metrics endpoint)
+|   +-- main.py                      (FastAPI app with /metrics endpoint)
 |   +-- routes/
-|       +-- health.py               (/health and /ready endpoints)
-+-- tests/                          (pytest test suite)
-+-- k8s/                            (local dev manifests only, not production)
+|       +-- health.py                (/health and /ready endpoints)
++-- tests/                           (pytest test suite)
++-- k8s/                             (local dev manifests only)
 +-- scripts/
-|   +-- refresh-ecr-secret.ps1      (ECR token refresh helper)
-+-- Dockerfile                      (non-root, layer-cached)
+|   +-- refresh-ecr-secret.ps1       (ECR token refresh helper)
++-- Dockerfile                       (non-root, layer-cached)
 +-- requirements.txt
 
-devops-gitops/                      (separate repo - GitOps source of truth)
+devops-gitops/                       (separate repo - GitOps source of truth)
 |
 +-- charts/
-+-- devops-app/
-+-- Chart.yaml
-+-- values.yaml             (CI updates image.tag on every deploy)
-+-- templates/
-+-- deployment.yaml
-+-- service.yaml
-+-- hpa.yaml
-+-- servicemonitor.yaml
-+-- prometheusrule.yaml
-
+    +-- devops-app/
+        +-- Chart.yaml
+        +-- values.yaml              (CI updates image.tag on every deploy)
+        +-- templates/
+            +-- deployment.yaml
+            +-- service.yaml
+            +-- hpa.yaml
+            +-- servicemonitor.yaml
+            +-- prometheusrule.yaml
+```
 
 ## Running Locally
 
