@@ -1,6 +1,4 @@
-﻿Here's the complete README text. Copy everything between the lines and paste directly into VS Code or Notepad, then save as README.md:
-
-# devops-app — Production-Grade DevOps Portfolio Project
+﻿# devops-app — Production-Grade DevOps Portfolio Project
 
 A complete DevOps platform demonstrating CI/CD, GitOps, container orchestration,
 and observability — built to production standards.
