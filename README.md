@@ -1,42 +1,42 @@
-# devops-app — Production-Grade DevOps Portfolio Project
+# devops-app - Production-Grade DevOps Portfolio Project
 
-A complete DevOps platform demonstrating CI/CD, GitOps, container orchestration, and observability — built to production standards.
+A complete DevOps platform demonstrating CI/CD, GitOps, container orchestration, and observability.
 
 ## Architecture
 
-Developer pushes code
-│
-▼
-┌─────────────────────────────────┐
-│         GitHub Actions CI       │
-│  test → lint → build → scan    │
-│  → push ECR → update GitOps    │
-└─────────────┬───────────────────┘
-│ updates image tag
-▼
-┌─────────────────────────────────┐
-│         devops-gitops repo      │
-│    Helm charts + values.yaml    │
-└─────────────┬───────────────────┘
-│ ArgoCD polls every 3 min
-▼
-┌─────────────────────────────────┐
-│         Kubernetes (EKS)        │
-│  production namespace           │
-│  ├── Deployment (2-10 replicas) │
-│  ├── Service (ClusterIP)        │
-│  ├── HPA (CPU/memory based)     │
-│  ├── ServiceMonitor             │
-│  └── PrometheusRule             │
-└─────────────┬───────────────────┘
-│ scrapes /metrics
-▼
-┌─────────────────────────────────┐
-│      Observability Stack        │
-│  Prometheus → Grafana dashboards│
-│  AlertManager → alert rules     │
-└─────────────────────────────────┘
-
+\Developer pushes code
+        |
+        v
++----------------------------------+
+|        GitHub Actions CI         |
+|  test > lint > build > scan      |
+|  > push ECR > update GitOps      |
++---------------+------------------+
+                |
+                v
++----------------------------------+
+|        devops-gitops repo        |
+|   Helm charts + values.yaml      |
++---------------+------------------+
+                |  ArgoCD polls every 3 min
+                v
++----------------------------------+
+|        Kubernetes (EKS)          |
+|  production namespace            |
+|  +-- Deployment (2-10 replicas)  |
+|  +-- Service (ClusterIP)         |
+|  +-- HPA (CPU/memory based)      |
+|  +-- ServiceMonitor              |
+|  +-- PrometheusRule              |
++---------------+------------------+
+                |  scrapes /metrics
+                v
++----------------------------------+
+|       Observability Stack        |
+|  Prometheus > Grafana dashboards |
+|  AlertManager > alert rules      |
++----------------------------------+
+\
 ## Tech Stack
 
 | Layer | Technology |
@@ -52,101 +52,93 @@ Developer pushes code
 | Observability | Prometheus, Grafana, AlertManager |
 | Autoscaling | Kubernetes HPA (CPU + memory) |
 
-## How a Deployment Works — End to End
+## How a Deployment Works
 
-1. Developer pushes code to `main` branch
-2. GitHub Actions triggers automatically:
-   - Runs `pytest` unit tests and `ruff` linter — fails fast if tests break
-   - Builds Docker image tagged with the exact git SHA (e.g. `abc123def`)
-   - Scans image with **Trivy** — pipeline fails if any CRITICAL vulnerability found
-   - Pushes verified image to **AWS ECR**
-   - Checks out `devops-gitops` repo and updates `image.tag` in `values.yaml` to the new SHA
-3. **ArgoCD** detects the `values.yaml` change within 3 minutes
-4. ArgoCD applies the updated Helm chart to the `production` namespace on EKS
-5. Kubernetes performs a **rolling update** — zero downtime, old pods terminate after new ones pass readiness probes
-6. **Prometheus** begins scraping the new pods via ServiceMonitor within 15 seconds
-7. **Grafana** dashboards reflect live traffic, latency, and replica count
+1. Developer pushes code to \main\ branch
+2. GitHub Actions triggers:
+   - Runs pytest tests and ruff linter
+   - Builds Docker image tagged with git SHA
+   - Scans with Trivy - blocks on CRITICAL CVEs
+   - Pushes to AWS ECR
+   - Updates image tag in devops-gitops values.yaml
+3. ArgoCD detects values.yaml change within 3 minutes
+4. ArgoCD applies Helm chart to production namespace on EKS
+5. Kubernetes performs rolling update - zero downtime
+6. Prometheus scrapes new pods via ServiceMonitor within 15s
+7. Grafana dashboards reflect live metrics
 
-## Rolling Back a Bad Deployment
+## Rolling Back
 
-```bash
-# Revert the GitOps repo to the previous commit
+\\ash
 git revert HEAD
 git push
-# ArgoCD detects the revert and automatically redeploys the previous image
-# No kubectl commands needed — Git is the single source of truth
-```
-
+# ArgoCD detects revert and redeploys previous image automatically
+\
 ## Repository Structure
 
-devops-app/                        <- this repo (application code)
-├── .github/
-│   ├── workflows/
-│   │   └── ci.yml                 <- GitHub Actions pipeline
-│   └── argocd/
-│       └── application.yaml       <- ArgoCD app definition
-├── app/
-│   ├── main.py                    <- FastAPI app with /metrics endpoint
-│   └── routes/
-│       └── health.py              <- /health and /ready endpoints
-├── tests/                         <- pytest test suite
-├── k8s/                           <- local dev manifests only (not production)
-├── scripts/
-│   └── refresh-ecr-secret.ps1     <- ECR token refresh helper
-├── Dockerfile                     <- non-root, layer-cached
-└── requirements.txt
-devops-gitops/                     <- separate repo (GitOps source of truth)
-└── charts/
-└── devops-app/
-├── Chart.yaml
-├── values.yaml            <- CI updates image.tag here on every deploy
-└── templates/
-├── deployment.yaml
-├── service.yaml
-├── hpa.yaml
-├── servicemonitor.yaml
-└── prometheusrule.yaml
+\devops-app/                         (this repo - application code)
++-- .github/
+|   +-- workflows/
+|   |   +-- ci.yml                  (GitHub Actions pipeline)
+|   +-- argocd/
+|       +-- application.yaml        (ArgoCD app definition)
++-- app/
+|   +-- main.py                     (FastAPI app with /metrics)
+|   +-- routes/
+|       +-- health.py               (/health and /ready endpoints)
++-- tests/                          (pytest test suite)
++-- k8s/                            (local dev manifests only)
++-- scripts/
+|   +-- refresh-ecr-secret.ps1      (ECR token refresh helper)
++-- Dockerfile                      (non-root, layer-cached)
++-- requirements.txt
 
+devops-gitops/                      (separate repo - GitOps source of truth)
++-- charts/
+    +-- devops-app/
+        +-- Chart.yaml
+        +-- values.yaml             (CI updates image.tag on every deploy)
+        +-- templates/
+            +-- deployment.yaml
+            +-- service.yaml
+            +-- hpa.yaml
+            +-- servicemonitor.yaml
+            +-- prometheusrule.yaml
+\
 ## Running Locally
 
-### Prerequisites
-- Docker Desktop with Kubernetes enabled
-- kubectl, helm, AWS CLI configured
+Prerequisites: Docker Desktop with Kubernetes, kubectl, helm, AWS CLI
 
-### Start local stack
-
-```powershell
-# 1. Refresh ECR pull secret (required after every restart)
+\\powershell
+# 1. Refresh ECR pull secret after every restart
 ./scripts/refresh-ecr-secret.ps1
 
-# 2. Start port-forwards (run each in a separate terminal)
+# 2. Start port-forwards (separate terminals)
 kubectl port-forward svc/argocd-server -n argocd 8090:443
 kubectl port-forward svc/devops-app -n production 8081:80
 kubectl port-forward svc/kube-prom-stack-grafana -n monitoring 3000:80
 kubectl port-forward svc/kube-prom-stack-kube-prome-prometheus -n monitoring 9090:9090
 
-# 3. Test the app
+# 3. Test
 Invoke-RestMethod http://localhost:8081/health
-Invoke-RestMethod http://localhost:8081/metrics
-```
-
-### Access Points
+\
+## Access Points
 
 | Service | URL | Credentials |
 |---|---|---|
-| Application | http://localhost:8081 | — |
-| ArgoCD UI | https://localhost:8090 | admin / (kubectl get secret) |
+| Application | http://localhost:8081 | - |
+| ArgoCD UI | https://localhost:8090 | admin / kubectl get secret |
 | Grafana | http://localhost:3000 | admin / admin123 |
-| Prometheus | http://localhost:9090 | — |
+| Prometheus | http://localhost:9090 | - |
 
 ## Observability
 
-### Grafana Dashboards
-- **devops-app overview** — requests/sec by pod, p95 latency by endpoint, available replicas
-- **Kubernetes cluster overview** (ID: 15760)
-- **Node exporter** (ID: 1860)
+Grafana Dashboards:
+- devops-app overview: requests/sec by pod, p95 latency, available replicas
+- Kubernetes cluster overview (ID: 15760)
+- Node exporter (ID: 1860)
 
-### Alert Rules
+Alert Rules:
 
 | Alert | Condition | Severity |
 |---|---|---|
@@ -155,44 +147,41 @@ Invoke-RestMethod http://localhost:8081/metrics
 
 ## Security
 
-- Docker image runs as **non-root user** (`appuser`)
-- **Trivy** scans every image before push — CRITICAL CVEs block deployment
-- AWS ECR **scan on push** enabled
-- Third-party GitHub Actions pinned to **specific versions** (not `@master`) following the March 2026 trivy-action supply chain incident
-- ECR authentication via **docker-registry secret** locally / **IRSA** recommended for production EKS
+- Docker image runs as non-root user (appuser)
+- Trivy scans every image - CRITICAL CVEs block deployment
+- AWS ECR scan on push enabled
+- GitHub Actions pinned to specific versions after March 2026 supply chain incident
+- ECR auth via docker-registry secret locally / IRSA for production EKS
 
 ## Key Design Decisions
 
 **Why two repos?**
-The GitOps pattern requires a clean separation between application code and deployment configuration. The `devops-gitops` repo is the single source of truth for what runs in the cluster — nothing deploys except through Git.
+Clean separation between app code and deployment config. The gitops repo is the single source of truth - nothing deploys except through Git.
 
-**Why ArgoCD over plain kubectl apply?**
-ArgoCD provides self-healing (reverts manual cluster changes), audit trail (every deployment is a git commit), and instant rollback (revert a commit, ArgoCD redeploys automatically).
+**Why ArgoCD over kubectl apply in CI?**
+Self-healing, audit trail, and instant rollback by reverting a git commit.
 
 **Why SHA-based image tags?**
-Using `latest` makes deployments non-deterministic. Every image is tagged with its exact git SHA, making every deployment fully traceable to a specific commit.
+Using latest makes deployments non-deterministic. SHA tags make every deploy traceable to a specific commit.
 
-**Why Trivy with exit-code 1?**
-Setting exit-code to 1 on CRITICAL severity turns the scanner from a reporting tool into a hard security gate. No CRITICAL vulnerability can reach production.
+**Why Trivy exit-code 1?**
+Turns scanner into a hard security gate. No CRITICAL vulnerability can reach production.
 
 ## Cost Estimate (AWS)
 
 | Resource | Cost |
 |---|---|
-| EKS cluster | ~$0.10/hour |
-| 2x t3.medium nodes | ~$0.083/hour |
-| ECR storage | ~$0.01/GB/month |
-| **Total (running)** | **~$5.50/day** |
+| EKS cluster | ~\.10/hour |
+| 2x t3.medium nodes | ~\.083/hour |
+| ECR storage | ~\.01/GB/month |
+| Total running | ~\.50/day |
 
-> Tip: Run `terraform destroy` when not actively demoing. Terraform state is in S3 so rebuilding takes 15 minutes.
+Tip: Run terraform destroy when not demoing. Rebuilding takes 15 minutes.
 
 ## What I Learned
 
-- GitOps pattern — why Git as single source of truth eliminates configuration drift
-- How Prometheus ServiceMonitor CRDs wire scrape targets without static config
-- Why ECR tokens expire and how IRSA solves this permanently on EKS
-- How Trivy supply chain attacks work and why pinning action versions matters
-- Rolling update mechanics — how readiness probes gate pod traffic during deploys
-
-
-[System.IO.File]::WriteAllText("$pwd\README.md", $readme)
+- GitOps pattern and why Git as source of truth eliminates config drift
+- How Prometheus ServiceMonitor CRDs wire scrape targets automatically
+- Why ECR tokens expire and how IRSA solves this on EKS
+- Supply chain attack awareness and why pinning Action versions matters
+- Rolling update mechanics and how readiness probes gate traffic
