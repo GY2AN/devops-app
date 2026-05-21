@@ -42,3 +42,5 @@ def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # rebuild trigger
+
+# restart trigger
